@@ -17,7 +17,7 @@ app.use(
 const axios = require("axios");
 
 app.get("/parseData", async (req, res) => {
-  console.log("request made to server");
+  console.log("request made to server...");
 
   const filePath = "./data/data.json";
   let existingData = [];
