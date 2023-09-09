@@ -9,7 +9,7 @@ app.use(express.json());
 const axios = require("axios");
 const FormData = require("form-data");
 
-const appendStream = fs.createWriteStream("data.json", { flags: "a" });
+const appendStream = fs.createWriteStream("./data/data.json", { flags: "a" });
 const { schools, years } = require("./getData");
 
 //optional for front end
@@ -57,9 +57,14 @@ async function getData(rows, page, school, i, year, j, schoolData) {
       });
   });
 }
+
+app.get("/testing", (req, res) => {
+  res.send("hello world");
+});
+
 app.post("/writejson", async (req, res) => {
   try {
-    const filePath = "data.json";
+    const filePath = "./data/data.json";
     let existingData = [];
 
     try {
@@ -195,6 +200,58 @@ app.post("/writejson", async (req, res) => {
     console.error(error);
     res.status(500).json({ error: "Error fetching data" });
   }
+});
+
+app.get("/parseData", async (req, res) => {
+  console.log("request made to server...");
+
+  const filePath = "./data/data.json";
+  let existingData = [];
+
+  try {
+    const fileContent = fs.readFileSync(filePath, "utf-8");
+    if (fileContent.length !== 0) {
+      existingData = JSON.parse(fileContent);
+    }
+  } catch (err) {
+    console.error("Error reading JSON file:", err);
+  }
+
+  const targetSchool = "Merced";
+  const targetName = "KYRILOV";
+  const matchingCells = [];
+  let foundSchool = false;
+
+  // Iterate through the data structure to find matching cells for the specific school
+  for (const entry of existingData) {
+    if (foundSchool) {
+      // If the school has already been found and processed, break the loop
+      break;
+    }
+    for (const yearEntry of entry.years) {
+      for (const payroll of yearEntry.payrolls) {
+        const cell = payroll.cell;
+        if (cell[0] === targetName) {
+          const payRollObejct = {
+            year: yearEntry.year,
+            payroll: cell,
+          };
+          matchingCells.push(payRollObejct);
+        }
+      }
+    }
+    if (entry.name === targetSchool) {
+      foundSchool = true;
+    }
+  }
+
+  if (matchingCells.length > 0) {
+    console.log("Matching cells for", targetName + ":", matchingCells);
+  } else {
+    console.log("No matching cells found for", targetName);
+  }
+
+  res.send(matchingCells);
 });
 
 process.on("SIGINT", () => {

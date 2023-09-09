@@ -6,8 +6,8 @@
     "nodemon": "^3.0.1"
   },
   "scripts": {
-    "start": "node parseData.js",
-    "dev": "nodemon parseData.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "name": "scrape-script",
   "version": "1.0.0",
