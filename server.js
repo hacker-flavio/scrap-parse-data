@@ -9,7 +9,9 @@ app.use(express.json());
 const axios = require("axios");
 const FormData = require("form-data");
 
-const appendStream = fs.createWriteStream("./data/data.json", { flags: "a" });
+const appendStream = fs.createWriteStream("./dataFiles/data.json", {
+  flags: "a",
+});
 const { schools, years, titles } = require("./getData");
 
 //optional for front end
@@ -64,7 +66,7 @@ app.get("/testing", (req, res) => {
 
 app.post("/writejson", async (req, res) => {
   try {
-    const filePath = "./data/data.json";
+    const filePath = "./dataFiles/data.json";
     let existingData = [];
 
     try {
@@ -136,12 +138,12 @@ app.post("/writejson", async (req, res) => {
         console.log("Payrolls already exist, skip this year");
       } else {
         console.log("Payrolls don't exist, fetch them");
-        // let rows = 1000;
-        // let page = 1;
-        // const maxPage = 100;
-        let rows = 20;
+        let rows = 1000;
         let page = 1;
-        const maxPage = 1;
+        const maxPage = 100;
+        // let rows = 20;
+        // let page = 1;
+        // const maxPage = 1;
 
         for (let k = 0; k < maxPage; k++) {
           const data = await getData(
@@ -212,7 +214,7 @@ app.post("/writejson", async (req, res) => {
 app.get("/parseData", async (req, res) => {
   console.log("request made to server...");
 
-  const filePath = "./data/data.json";
+  const filePath = "./dataFiles/data.json";
   let existingData = [];
 
   try {
@@ -348,7 +350,7 @@ async function indexData(schoolData) {
 }
 
 app.get("/indexData", async (req, res) => {
-  const filePath = "./data/data.json";
+  const filePath = "./dataFiles/data.json";
   let existingData = [];
 
   try {
@@ -361,7 +363,7 @@ app.get("/indexData", async (req, res) => {
   }
 
   // Now, save existingData to a different JSON file named indexData.json
-  const newIndexFilePath = "./data/indexData.json";
+  const newIndexFilePath = "./dataFiles/indexData.json";
 
   const indexDataResolved = await indexData(existingData);
 
@@ -376,6 +378,52 @@ app.get("/indexData", async (req, res) => {
   }
 
   res.send("Data saved to indexData.json");
+});
+
+app.get("/indexEmployee", async (req, res) => {
+  const filePath = "./dataFiles/indexData.json";
+  let existingData = [];
+
+  try {
+    const fileContent = fs.readFileSync(filePath, "utf-8");
+    if (fileContent.length !== 0) {
+      existingData = JSON.parse(fileContent);
+    }
+  } catch (err) {
+    console.error("Error reading JSON file:", err);
+  }
+
+  const schoolNameToFind = "Merced";
+  const employeeNameToFind = "ROGELIO CHAVEZ";
+
+  // Find the school that matches the school name
+  const school = existingData.find(
+    (school) => school.name === schoolNameToFind
+  );
+
+  if (school) {
+    // Find the employee within the school
+    const employee = school.employees.find(
+      (employee) => employee.name === employeeNameToFind
+    );
+
+    if (employee) {
+      const payrolls = employee.payrolls;
+      console.log(
+        "Payrolls for",
+        employeeNameToFind,
+        "at",
+        schoolNameToFind,
+        ":",
+        payrolls
+      );
+      res.send(payrolls);
+    } else {
+      console.log("Employee not found in", schoolNameToFind);
+    }
+  } else {
+    console.log("School not found:", schoolNameToFind);
+  }
 });
 
 process.on("SIGINT", () => {
