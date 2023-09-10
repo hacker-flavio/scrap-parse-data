@@ -4,7 +4,7 @@ const schools = [
   // "Irvine",
   // "Los Angeles",
   "Merced",
-  // "Riverside",
+  "Riverside",
   // "San Diego",
   // "San Francisco",
   // "Santa Barbara",
@@ -22,10 +22,12 @@ const years = [
   // "2018",
   // "2019",
   // "2020",
-  // "2021",
+  "2021",
   "2022",
 ];
 
+const titles = ["PROF", "CHAN", "EXEC", "VC", "DEAN"];
+
 const columns = [];
 
-module.exports = { schools, years };
+module.exports = { schools, years, titles };

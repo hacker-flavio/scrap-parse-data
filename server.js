@@ -10,7 +10,7 @@ const axios = require("axios");
 const FormData = require("form-data");
 
 const appendStream = fs.createWriteStream("./data/data.json", { flags: "a" });
-const { schools, years } = require("./getData");
+const { schools, years, titles } = require("./getData");
 
 //optional for front end
 // app.use(express.static(path.resolve(__dirname, "./frontend/build")));
@@ -136,9 +136,12 @@ app.post("/writejson", async (req, res) => {
         console.log("Payrolls already exist, skip this year");
       } else {
         console.log("Payrolls don't exist, fetch them");
-        let rows = 1000;
+        // let rows = 1000;
+        // let page = 1;
+        // const maxPage = 100;
+        let rows = 20;
         let page = 1;
-        const maxPage = 100;
+        const maxPage = 1;
 
         for (let k = 0; k < maxPage; k++) {
           const data = await getData(
@@ -153,7 +156,11 @@ app.post("/writejson", async (req, res) => {
 
           const processedData = data.map((item) => ({
             id: item.id,
-            cell: [item.cell[4], item.cell[6]],
+            cell: [
+              `${item.cell[3]} ${item.cell[4]}`,
+              item.cell[5],
+              item.cell[6],
+            ],
           }));
 
           // Find the corresponding school and year in existingData
@@ -218,7 +225,7 @@ app.get("/parseData", async (req, res) => {
   }
 
   const targetSchool = "Merced";
-  const targetName = "KYRILOV";
+  const targetName = "ROGELIO CHAVEZ";
   const matchingCells = [];
   let foundSchool = false;
 
@@ -252,6 +259,123 @@ app.get("/parseData", async (req, res) => {
   }
 
   res.send(matchingCells);
+});
+
+async function indexData(schoolData) {
+  return new Promise((resolve, reject) => {
+    try {
+      const newIndexedData = [];
+      for (let i = 0; i < schoolData.length; i++) {
+        const school = schoolData[i];
+        const schoolObject = {
+          name: school.name,
+          employees: [],
+          years: [],
+        };
+        newIndexedData.push(schoolObject);
+        console.log(schoolObject);
+        for (let j = 0; j < school.years.length; j++) {
+          const year = school.years[j];
+          const yearObject = {
+            year: year.year,
+            titles: [],
+          };
+          schoolObject.years.push(yearObject);
+          for (let k = 0; k < year.payrolls.length; k++) {
+            const payroll = year.payrolls[k];
+            const name = payroll.cell[0];
+            const title = payroll.cell[1];
+            const pay = payroll.cell[2];
+            const result = title.split(/[\s-]+/);
+
+            const employeeObject = {
+              name: name,
+              titles: result,
+              payrolls: [{ year: year.year, salary: pay }],
+            };
+
+            const nameIndex = schoolObject.employees.findIndex(
+              (item) => item.name === name
+            );
+            if (nameIndex === -1) {
+              schoolObject.employees.push(employeeObject);
+            } else {
+              schoolObject.employees[nameIndex].payrolls.push({
+                year: year.year,
+                salary: pay,
+              });
+            }
+
+            for (let titleIndex = 0; titleIndex < result.length; titleIndex++) {
+              const title = result[titleIndex];
+              if (titles.includes(title)) {
+                console.log("title found: " + title + " in titles array");
+
+                const titleIndex = schoolObject.years[j].titles.findIndex(
+                  (item) => item.title === title
+                );
+
+                if (titleIndex === -1) {
+                  // Create a new title object and add it to the titles array
+                  const newTitle = {
+                    title: title,
+                    employees: [name],
+                  };
+                  schoolObject.years[j].titles.push(newTitle);
+                } else {
+                  if (
+                    !schoolObject.years[j].titles[
+                      titleIndex
+                    ].employees.includes(name)
+                  ) {
+                    schoolObject.years[j].titles[titleIndex].employees.push(
+                      name
+                    );
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      resolve(newIndexedData);
+    } catch (err) {
+      console.log(err);
+      reject({ message: "error" });
+    }
+  });
+}
+
+app.get("/indexData", async (req, res) => {
+  const filePath = "./data/data.json";
+  let existingData = [];
+
+  try {
+    const fileContent = fs.readFileSync(filePath, "utf-8");
+    if (fileContent.length !== 0) {
+      existingData = JSON.parse(fileContent);
+    }
+  } catch (err) {
+    console.error("Error reading JSON file:", err);
+  }
+
+  // Now, save existingData to a different JSON file named indexData.json
+  const newIndexFilePath = "./data/indexData.json";
+
+  const indexDataResolved = await indexData(existingData);
+
+  try {
+    fs.writeFileSync(
+      newIndexFilePath,
+      JSON.stringify(indexDataResolved, null, 2)
+    );
+    console.log("Existing data saved to indexData.json");
+  } catch (err) {
+    console.error("Error saving data to indexData.json:", err);
+  }
+
+  res.send("Data saved to indexData.json");
 });
 
 process.on("SIGINT", () => {
