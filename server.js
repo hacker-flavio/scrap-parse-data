@@ -8,6 +8,17 @@ const app = express();
 app.use(express.json());
 const axios = require("axios");
 const FormData = require("form-data");
+require("dotenv").config();
+const mongoose = require("mongoose");
+const dburl = process.env.DBURL;
+
+mongoose.connect(dburl, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+const mdb = mongoose.connection;
+mdb.on("error", (error) => console.error(error));
+mdb.once("open", () => console.log("Connected to Mongoose"));
 
 const appendStream = fs.createWriteStream("./dataFiles/data.json", {
   flags: "a",
@@ -257,7 +268,7 @@ app.get("/parseData", async (req, res) => {
   if (matchingCells.length > 0) {
     console.log("Matching cells for", targetName + ":", matchingCells);
   } else {
-    console.log("No matching cells found for", targetName);
+    console.log("No matching cells found for: ", targetName);
   }
 
   res.send(matchingCells);
@@ -423,6 +434,66 @@ app.get("/indexEmployee", async (req, res) => {
     }
   } else {
     console.log("School not found:", schoolNameToFind);
+  }
+});
+
+// Define an API route for inserting JSON data
+app.post("/insertData", async (req, res) => {
+  try {
+    const jsonFilePath = "./dataFiles/indexData.json"; // Replace with the actual path to your JSON file
+    const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, "utf-8"));
+
+    // Use your Mongoose model (if needed)
+    // await SaveFile.insertMany(jsonData);
+
+    const collection = mongoose.connection.db.collection("dataFile"); // Replace with your collection name
+
+    await collection.insertMany(jsonData);
+
+    console.log("Data inserted successfully into MongoDB.");
+    res.status(200).send("Data inserted successfully into MongoDB.");
+  } catch (error) {
+    console.error("Error inserting data into MongoDB:", error);
+    res.status(500).send("Error inserting data into MongoDB.");
+  }
+});
+
+app.get("/indexEmployeeMongo", async (req, res) => {
+  const schoolNameToFind = "Merced";
+  const employeeNameToFind = "ROGELIO CHAVEZ";
+
+  try {
+    const collection = mongoose.connection.db.collection("dataFile"); // Replace with your collection name
+
+    const school = await collection.findOne({ name: schoolNameToFind });
+
+    if (school) {
+      const employee = school.employees.find(
+        (employee) => employee.name === employeeNameToFind
+      );
+
+      if (employee) {
+        const payrolls = employee.payrolls;
+        console.log(
+          "Payrolls for",
+          employeeNameToFind,
+          "at",
+          schoolNameToFind,
+          ":",
+          payrolls
+        );
+        res.send(payrolls);
+      } else {
+        console.log("Employee not found in", schoolNameToFind);
+        res.status(404).send("Employee not found");
+      }
+    } else {
+      console.log("School not found:", schoolNameToFind);
+      res.status(404).send("School not found");
+    }
+  } catch (error) {
+    console.error("Error retrieving data from MongoDB:", error);
+    res.status(500).send("Internal Server Error");
   }
 });
 
