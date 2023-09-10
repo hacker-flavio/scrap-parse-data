@@ -459,8 +459,11 @@ app.post("/insertData", async (req, res) => {
 });
 
 app.get("/indexEmployeeMongo", async (req, res) => {
-  const schoolNameToFind = "Merced";
-  const employeeNameToFind = "ROGELIO CHAVEZ";
+  const { schoolName, employeeName } = req.query;
+  // const schoolNameToFind = "Merced";
+  // const employeeNameToFind = "ROGELIO CHAVEZ";
+  const schoolNameToFind = schoolName;
+  const employeeNameToFind = employeeName;
 
   try {
     const collection = mongoose.connection.db.collection("dataFile"); // Replace with your collection name
