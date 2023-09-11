@@ -418,7 +418,7 @@ app.get("/indexEmployee", async (req, res) => {
   }
 
   const schoolNameToFind = "Merced";
-  const employeeNameToFind = "ROGELIO CHAVEZ";
+  const employeeNameToFind = "JAY SHARPING";
 
   // Find the school that matches the school name
   const school = existingData.find(
