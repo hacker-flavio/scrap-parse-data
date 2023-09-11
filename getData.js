@@ -18,6 +18,7 @@ const years = [
   "2013",
   "2014",
   "2015",
+  "2016",
   "2017",
   "2018",
   "2019",
@@ -27,12 +28,12 @@ const years = [
 ];
 
 const titles = [
-  // "PROF",
+  "PROF",
   // "CHAN",
   // "EXEC",
   // "VC",
   // "DEAN",
-  "FOOD",
+  // "FOOD",
   "LECT",
 ];
 

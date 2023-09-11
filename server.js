@@ -238,7 +238,7 @@ app.get("/parseData", async (req, res) => {
   }
 
   const targetSchool = "Merced";
-  const targetName = "ROGELIO CHAVEZ";
+  const targetName = "JAY SHARPING";
   const matchingCells = [];
   let foundSchool = false;
 
@@ -251,7 +251,12 @@ app.get("/parseData", async (req, res) => {
     for (const yearEntry of entry.years) {
       for (const payroll of yearEntry.payrolls) {
         const cell = payroll.cell;
-        if (cell[0] === targetName) {
+        const name = cell[0];
+        const splitName = name.split(" ");
+        const firstName = splitName[0];
+        const lastName = splitName[splitName.length - 1];
+        const fullName = firstName + " " + lastName;
+        if (fullName === targetName) {
           const payRollObejct = {
             year: yearEntry.year,
             payroll: cell,
@@ -297,18 +302,26 @@ async function indexData(schoolData) {
           for (let k = 0; k < year.payrolls.length; k++) {
             const payroll = year.payrolls[k];
             const name = payroll.cell[0];
+            const splitName = name.split(" ");
+            const firstName = splitName[0];
+            const lastName = splitName[splitName.length - 1];
+            const fullName = firstName + " " + lastName;
             const title = payroll.cell[1];
             const pay = payroll.cell[2];
             const result = title.split(/[\s-]+/);
 
+            if (fullName === "JAY SHARPING") {
+              console.log("found jay");
+            }
+
             const employeeObject = {
-              name: name,
+              name: fullName,
               titles: result,
               payrolls: [{ year: year.year, salary: pay }],
             };
 
             const nameIndex = schoolObject.employees.findIndex(
-              (item) => item.name === name
+              (item) => item.name === fullName
             );
             if (nameIndex === -1) {
               schoolObject.employees.push(employeeObject);
@@ -322,7 +335,7 @@ async function indexData(schoolData) {
             for (let titleIndex = 0; titleIndex < result.length; titleIndex++) {
               const title = result[titleIndex];
               if (titles.includes(title)) {
-                console.log("title found: " + title + " in titles array");
+                //console.log("title found: " + title + " in titles array");
 
                 const titleIndex = schoolObject.years[j].titles.findIndex(
                   (item) => item.title === title
@@ -332,17 +345,17 @@ async function indexData(schoolData) {
                   // Create a new title object and add it to the titles array
                   const newTitle = {
                     title: title,
-                    employees: [name],
+                    employees: [fullName],
                   };
                   schoolObject.years[j].titles.push(newTitle);
                 } else {
                   if (
                     !schoolObject.years[j].titles[
                       titleIndex
-                    ].employees.includes(name)
+                    ].employees.includes(fullName)
                   ) {
                     schoolObject.years[j].titles[titleIndex].employees.push(
-                      name
+                      fullName
                     );
                   }
                 }
