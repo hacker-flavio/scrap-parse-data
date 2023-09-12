@@ -350,6 +350,7 @@ async function indexData(schoolData) {
           name: school.name,
           employees: [],
           years: [],
+          employeeList: [],
         };
         newIndexedData.push(schoolObject);
         console.log(schoolObject);
@@ -371,10 +372,6 @@ async function indexData(schoolData) {
             const pay = payroll.cell[2];
             const result = title.split(/[\s-]+/);
 
-            if (fullName === "JAY SHARPING") {
-              console.log("found jay");
-            }
-
             const employeeObject = {
               name: fullName,
               titles: result,
@@ -386,6 +383,7 @@ async function indexData(schoolData) {
             );
             if (nameIndex === -1) {
               schoolObject.employees.push(employeeObject);
+              schoolObject.employeeList.push(fullName);
             } else {
               schoolObject.employees[nameIndex].payrolls.push({
                 year: year.year,
