@@ -20,9 +20,70 @@ const mdb = mongoose.connection;
 mdb.on("error", (error) => console.error(error));
 mdb.once("open", () => console.log("Connected to Mongoose"));
 
-const appendStream = fs.createWriteStream("./dataFiles/data.json", {
-  flags: "a",
+const dir = "./dataFiles";
+const filePath = "./dataFiles/data.json";
+const indexFilePath = "./dataFiles/indexData.json";
+let appendStream;
+
+function createDirAndFile(callback) {
+  console.log("Directory and file do not exist");
+  console.log("Creating directory and file...");
+
+  fs.mkdir(dir, { recursive: true }, (err) => {
+    if (err) {
+      console.error("Error creating directory:", err);
+    } else {
+      console.log("Directory created");
+
+      // Now that the directory exists, create the file
+      fs.writeFileSync(filePath, "", "utf-8");
+      fs.writeFileSync(indexFilePath, "", "utf-8");
+      console.log("Files created");
+
+      callback(); // Call the callback function to indicate completion
+    }
+  });
+}
+
+// Check if directory exists
+fs.access(dir, (err) => {
+  if (err) {
+    createDirAndFile(() => {
+      // Callback function to create the appendStream after directory and file creation
+      createAppendStream();
+    });
+  } else {
+    console.log("Directory exists");
+
+    // Check if file exists
+    fs.access(filePath, (err) => {
+      if (err) {
+        console.log("File does not exist");
+        // You can choose to create the file here if needed
+      } else {
+        console.log("File exists");
+
+        fs.access(indexFilePath, (err) => {
+          if (err) {
+            console.log("Index file does not exist");
+          } else {
+            console.log("Index file exists");
+
+            // Create the appendStream directly if the directory and file already exist
+            createAppendStream();
+          }
+        });
+      }
+    });
+  }
 });
+
+function createAppendStream() {
+  appendStream = fs.createWriteStream(filePath, {
+    flags: "a",
+  });
+}
+
 const { schools, years, titles } = require("./getData");
 
 //optional for front end
@@ -455,9 +516,6 @@ app.post("/insertData", async (req, res) => {
   try {
     const jsonFilePath = "./dataFiles/indexData.json"; // Replace with the actual path to your JSON file
     const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, "utf-8"));
-
-    // Use your Mongoose model (if needed)
-    // await SaveFile.insertMany(jsonData);
 
     const collection = mongoose.connection.db.collection("dataFile"); // Replace with your collection name
 
